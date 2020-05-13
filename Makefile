@@ -1,5 +1,5 @@
-SQLITE_INC=-I/home/gdb/include
-SQLITE_OBJ=/home/gdb/lib/libsqlite3.a
+SQLITE_INC=
+SQLITE_OBJ=/usr/lib/x86_64-linux-gnu/libsqlite3.a
 
 XML_INC=-I../xmlTrivialCallbackParser
 XML_OBJ=../xmlTrivialCallbackParser/xml.o
