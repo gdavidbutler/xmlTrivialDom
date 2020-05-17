@@ -27,11 +27,11 @@ xqlSchema(
   int rc;
 
   if ((rc = sqlite3_exec(d
-  ,"BEGIN;"
+  ,"SAVEPOINT \"xqlSchema\";"
 # include "xql.str"
-   "COMMIT;"
+   "RELEASE \"xqlSchema\";"
   ,0,0,0)))
-    sqlite3_exec(d, "ROLLBACK;", 0,0,0);
+    sqlite3_exec(d, "ROLLBACK TO \"xqlSchema\";", 0,0,0);
   return (rc);
 }
 
@@ -61,6 +61,9 @@ si(
 
 struct cx {
   sqlite3 *db;
+  sqlite3_stmt *stB;
+  sqlite3_stmt *stC;
+  sqlite3_stmt *stR;
   sqlite3_stmt *stTs;
   sqlite3_stmt *stTi;
   sqlite3_stmt *stCs;
@@ -86,13 +89,15 @@ cb(
   sqlite3_int64 o1;
   sqlite3_int64 o2;
   xmlSt_t s1;
-  int ret;
   int rc;
 
-  ret = 1;
   switch (t) {
 
   case xmlTp_Eb:
+    rc = sqlite3_step(X->stB);
+    sqlite3_reset(X->stB);
+    if (rc != SQLITE_DONE)
+      goto exit;
     if (!(o1 = si(X->db, X->stTs, X->stTi, g + l - 1)))
       goto exit;
     sqlite3_bind_int64(X->stEi, 1, *(X->pth + l - 1));
@@ -110,9 +115,15 @@ cb(
     }
     *(X->pth + X->pthN) = sqlite3_last_insert_rowid(X->db);
     ++X->pthN;
+    sqlite3_step(X->stC);
+    sqlite3_reset(X->stC);
     break;
 
   case xmlTp_Ea:
+    rc = sqlite3_step(X->stB);
+    sqlite3_reset(X->stB);
+    if (rc != SQLITE_DONE)
+      goto exit;
     if (!(o1 = si(X->db, X->stCs, X->stCi, v)))
       goto exit;
     if (!n)
@@ -129,9 +140,15 @@ cb(
     sqlite3_reset(X->stAi);
     if (rc != SQLITE_DONE)
       goto exit;
+    sqlite3_step(X->stC);
+    sqlite3_reset(X->stC);
     break;
 
   case xmlTp_Ec:
+    rc = sqlite3_step(X->stB);
+    sqlite3_reset(X->stB);
+    if (rc != SQLITE_DONE)
+      goto exit;
     if (!(o1 = si(X->db, X->stCs, X->stCi, v)))
       goto exit;
     sqlite3_bind_int64(X->stEi, 1, *(X->pth + l));
@@ -141,6 +158,8 @@ cb(
     sqlite3_reset(X->stEi);
     if (rc != SQLITE_DONE)
       goto exit;
+    sqlite3_step(X->stC);
+    sqlite3_reset(X->stC);
     break;
 
   case xmlTp_Ee:
@@ -149,9 +168,11 @@ cb(
     break;
 
   }
-  ret = 0;
+  return (0);
 exit:
-  return (ret);
+  sqlite3_step(X->stR);
+  sqlite3_reset(X->stR);
+  return (1);
 }
 #undef X
 
@@ -177,11 +198,25 @@ xml2xql(
   } else
     tg = 0;
   cx.db = d;
-  cx.stTs = cx.stTi = cx.stCs = cx.stCi = cx.stEi = 0;
+  cx.stB = cx.stC = cx.stR = cx.stTs = cx.stTi = cx.stCs = cx.stCi = cx.stEi = 0;
   if (!(cx.pth = sqlite3_malloc(sizeof (*cx.pth))))
     goto exit;
   *cx.pth = o;
   cx.pthM = cx.pthN = 1;
+  if ((rc = sqlite3_exec(d, "SAVEPOINT \"xml2xql\";", 0,0,0)))
+    goto exit;
+  if ((rc = -sqlite3_prepare_v2(d
+   ,"SAVEPOINT \"xml2xqlCb\";"
+   ,-1, &cx.stB, 0)))
+    goto exit;
+  if ((rc = -sqlite3_prepare_v2(d
+   ,"RELEASE \"xml2xqlCb\";"
+   ,-1, &cx.stC, 0)))
+    goto exit;
+  if ((rc = -sqlite3_prepare_v2(d
+   ,"ROLLBACK TO \"xml2xqlCb\";"
+   ,-1, &cx.stR, 0)))
+    goto exit;
   if ((rc = -sqlite3_prepare_v2(d
    ,"SELECT \"i\" FROM \"XqlT\" WHERE \"v\"=?1"
    ,-1, &cx.stTs, 0)))
@@ -213,6 +248,10 @@ exit:
   sqlite3_finalize(cx.stCs);
   sqlite3_finalize(cx.stTi);
   sqlite3_finalize(cx.stTs);
+  sqlite3_finalize(cx.stR);
+  sqlite3_finalize(cx.stC);
+  sqlite3_finalize(cx.stB);
+  sqlite3_exec(d, "RELEASE \"xml2xql\";", 0,0,0);
   sqlite3_free(tg);
   return (rc);
 }
@@ -239,6 +278,8 @@ xql2xml(
   liN = 0;
   if (!(rs = sqlite3_str_new(0))
    || sqlite3_str_errcode(rs))
+    goto exit;
+  if ((rc = sqlite3_exec(d, "SAVEPOINT \"xql2xml\";", 0,0,0)))
     goto exit;
   if ((rc = sqlite3_prepare_v2(d
   ,"WITH"
@@ -351,6 +392,7 @@ exit:
   sqlite3_finalize(stT);
   sqlite3_finalize(stA);
   sqlite3_finalize(stE);
+  sqlite3_exec(d, "RELEASE \"xql2xml\";", 0,0,0);
   if (!rs)
     xml = 0;
   else if (sqlite3_str_errcode(rs))
