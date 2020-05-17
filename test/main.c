@@ -58,7 +58,7 @@ main(
     fprintf(stderr, "sqlite3_exec:%d:%s\n", rc, sqlite3_errmsg(db));
     return (rc);
   }
-  if ((rc = xml2xql(db, 0, bf, i, 64)) < 0) {
+  if ((rc = xml2xql(db, 0, bf, i, 64, 0)) < 0) {
     fprintf(stderr, "xml2xql:%d:%s\n", rc, sqlite3_errmsg(db));
     return (rc);
   } else if (rc != i)

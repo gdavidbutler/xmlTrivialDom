@@ -1,19 +1,22 @@
 # xmlTrivialDom
 Trivial XML DOM in SQLite
 
-### XQL
+### XML
 
 My [xmlTrivialCallbackParser](https://github.com/gdavidbutler/xmlTrivialCallbackParser) enables fast and easy XML document parsing and processing.
 The callback style works well as a driving flow, in other words, when all the support to process an XML document can be invoked as parsed.
 However, many times, an XML document is needed to provide support for other flows.
-In this case, the document must be searchable.
-A database.
+In this case, the document must be searchable and/or modifiable.
+
+### Database.
 
 Using a SQL database for a DOM has many advantages.
 The biggest one is the ability to use a standard query language, [SQL](https://en.wikipedia.org/wiki/SQL).
 
 Using [SQLite](https://sqlite.org) for a DOM has many advantages.
 The biggest one is it supports small, fast and embeddable databases.
+
+### XQL
 
 Find the API in xql.h:
 
@@ -26,7 +29,7 @@ Find the API in xql.h:
 
 ### Example
 
-* test/main.c: reads an XML document on standard input, populates an, optionally specified, SQLite "database", then outputs XML from the "database".
+* test/main.c: read an XML document(s) on standard input, adding to an optional SQLite "database", then output XML document(s) from the "database".
 
 ### Building
 

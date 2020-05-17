@@ -73,6 +73,7 @@ struct cx {
   sqlite3_int64 *pth;
   unsigned int pthM;
   unsigned int pthN;
+  int wb;
 };
 
 static int
@@ -145,6 +146,8 @@ cb(
     break;
 
   case xmlTp_Ec:
+    if (!n && !X->wb)
+      break;
     rc = sqlite3_step(X->stB);
     sqlite3_reset(X->stB);
     if (rc != SQLITE_DONE)
@@ -183,6 +186,7 @@ xml2xql(
  ,const unsigned char *s
  ,unsigned int l
  ,unsigned int m
+ ,int w
 ){
   xmlSt_t *tg;
   struct cx cx;
@@ -198,6 +202,7 @@ xml2xql(
   } else
     tg = 0;
   cx.db = d;
+  cx.wb = w;
   cx.stB = cx.stC = cx.stR = cx.stTs = cx.stTi = cx.stCs = cx.stCi = cx.stEi = 0;
   if (!(cx.pth = sqlite3_malloc(sizeof (*cx.pth))))
     goto exit;
