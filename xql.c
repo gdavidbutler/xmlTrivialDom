@@ -248,7 +248,7 @@ xml2xql(
     goto exit;
   *cx.pth = o;
   cx.pthM = cx.pthN = 1;
-  if ((rc = sqlite3_exec(d, "SAVEPOINT \"xml2xql\";", 0,0,0)))
+  if ((rc = -sqlite3_exec(d, "SAVEPOINT \"xml2xql\";", 0,0,0)))
     goto exit;
   if ((rc = -sqlite3_prepare_v2(d
    ,"SAVEPOINT \"xml2xqlCb\";"
@@ -333,13 +333,13 @@ xql2xml(
   ,"WITH"
    " \"w1\"(\"l\",\"e\",\"o\",\"i\",\"t\",\"v\")AS("
               "SELECT 0,\"e1\".\"e\",\"e1\".\"o\",\"e1\".\"i\",\"e1\".\"t\",\"e1\".\"v\""
-             " FROM      \"XqlE\" \"e1\""
+             " FROM \"XqlE\" \"e1\""
              " WHERE \"e1\".\"e\"=?1"
    " UNION ALL SELECT \"w1\".\"l\"+1,\"e1\".\"e\",\"e1\".\"o\",\"e1\".\"i\",\"e1\".\"t\",\"e1\".\"v\""
              " FROM \"w1\""
                   ",\"XqlE\" \"e1\""
              " WHERE \"e1\".\"e\"=\"w1\".\"i\""
-   " ORDER BY 1 DESC, 2 ASC, 3 ASC"
+   " ORDER BY 1 DESC,2 ASC,3 ASC"
     ")"
    "SELECT \"l\",\"i\",\"t\",\"v\" FROM \"w1\""
    ,-1, &stE, 0)))
