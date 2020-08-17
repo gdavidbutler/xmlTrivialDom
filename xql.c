@@ -207,6 +207,9 @@ xml2xql(
   xmlSt_t *tg;
   struct cx cx;
   int rc;
+  int ch;
+  int fk;
+  int tr;
 
   rc = -SQLITE_ERROR;
   if (!d || !s)
@@ -221,35 +224,56 @@ xml2xql(
   cx.db = d;
   cx.wb = w;
   cx.stTs = cx.stTi = cx.stCs = cx.stCi = cx.stEi = cx.stAi = 0;
+  ch = 1;
+  fk = tr = 0;
   if (!(cx.pth = sqlite3_malloc(sizeof (*cx.pth))))
     goto exit;
   *cx.pth = o;
   cx.pthM = cx.pthN = 1;
-  if ((rc = -sqlite3_exec(d, "SAVEPOINT \"xml2xql\";", 0,0,0)))
-    goto exit;
   if ((rc = -sqlite3_prepare_v2(d
-   ,"SELECT \"i\" FROM \"XqlT\" WHERE \"v\"=?1"
+   ,"PRAGMA ignore_check_constraints"
    ,-1, &cx.stTs, 0)))
     goto exit;
-  if ((rc = -sqlite3_prepare_v2(d
+  if ((rc = sqlite3_step(cx.stTs)) != SQLITE_ROW)
+    goto exit;
+  ch = sqlite3_column_int(cx.stTs, 0);
+  sqlite3_finalize(cx.stTs);
+  cx.stTs = 0;
+  if ((rc = -sqlite3_db_config(d, SQLITE_DBCONFIG_ENABLE_FKEY, -1, &fk)))
+    goto exit;
+  if ((rc = -sqlite3_db_config(d, SQLITE_DBCONFIG_ENABLE_TRIGGER, -1, &tr)))
+    goto exit;
+  if (!ch && (rc = -sqlite3_exec(d, "PRAGMA ignore_check_constraints=1;", 0,0,0)))
+    goto exit;
+  if (fk && (rc = -sqlite3_db_config(d, SQLITE_DBCONFIG_ENABLE_FKEY, 0, 0)))
+    goto exit;
+  if (tr && (rc = -sqlite3_db_config(d, SQLITE_DBCONFIG_ENABLE_TRIGGER, 0, 0)))
+    goto exit;
+  if ((rc = -sqlite3_exec(d, "SAVEPOINT \"xml2xql\";", 0,0,0)))
+    goto exit;
+  if ((rc = -sqlite3_prepare_v3(d
+   ,"SELECT \"i\" FROM \"XqlT\" WHERE \"v\"=?1"
+   ,-1, SQLITE_PREPARE_PERSISTENT, &cx.stTs, 0)))
+    goto exit;
+  if ((rc = -sqlite3_prepare_v3(d
    ,"INSERT INTO \"XqlT\"(\"v\")VALUES(?1)"
-   ,-1, &cx.stTi, 0)))
+   ,-1, SQLITE_PREPARE_PERSISTENT, &cx.stTi, 0)))
     goto exit;
-  if ((rc = -sqlite3_prepare_v2(d
+  if ((rc = -sqlite3_prepare_v3(d
    ,"SELECT \"i\" FROM \"XqlC\" WHERE \"v\"=?1"
-   ,-1, &cx.stCs, 0)))
+   ,-1, SQLITE_PREPARE_PERSISTENT, &cx.stCs, 0)))
     goto exit;
-  if ((rc = -sqlite3_prepare_v2(d
+  if ((rc = -sqlite3_prepare_v3(d
    ,"INSERT INTO \"XqlC\"(\"v\")VALUES(?1)"
-   ,-1, &cx.stCi, 0)))
+   ,-1, SQLITE_PREPARE_PERSISTENT, &cx.stCi, 0)))
     goto exit;
-  if ((rc = -sqlite3_prepare_v2(d
+  if ((rc = -sqlite3_prepare_v3(d
    ,"INSERT INTO \"XqlE\"(\"e\",\"o\",\"t\",\"v\")VALUES(?1,IFNULL((SELECT MAX(\"o\")+1 FROM \"XqlE\" WHERE \"e\"=?1),0),?2,?3)"
-   ,-1, &cx.stEi, 0)))
+   ,-1, SQLITE_PREPARE_PERSISTENT, &cx.stEi, 0)))
     goto exit;
-  if ((rc = -sqlite3_prepare_v2(d
+  if ((rc = -sqlite3_prepare_v3(d
    ,"INSERT INTO \"XqlA\"(\"e\",\"o\",\"v\",\"n\")VALUES(?1,IFNULL((SELECT MAX(\"o\")+1 FROM \"XqlA\" WHERE \"e\"=?1),0),?2,?3)"
-   ,-1, &cx.stAi, 0)))
+   ,-1, SQLITE_PREPARE_PERSISTENT, &cx.stAi, 0)))
     goto exit;
   rc = xmlParse(cb, m, tg, s, l, &cx);
 exit:
@@ -261,6 +285,12 @@ exit:
   sqlite3_finalize(cx.stTi);
   sqlite3_finalize(cx.stTs);
   sqlite3_exec(d, "RELEASE \"xml2xql\";", 0,0,0);
+  if (tr)
+    sqlite3_db_config(d, SQLITE_DBCONFIG_ENABLE_TRIGGER, tr, 0);
+  if (fk)
+    sqlite3_db_config(d, SQLITE_DBCONFIG_ENABLE_FKEY, fk, 0);
+  if (!ch)
+    sqlite3_exec(d, "PRAGMA ignore_check_constraints=0;", 0,0,0);
   sqlite3_free(tg);
   return (rc);
 }
@@ -291,7 +321,7 @@ xql2xml(
     goto exit;
   if ((rc = sqlite3_exec(d, "SAVEPOINT \"xql2xml\";", 0,0,0)))
     goto exit;
-  if ((rc = sqlite3_prepare_v2(d
+  if ((rc = sqlite3_prepare_v3(d
   ,"WITH"
    " \"w1\"(\"l\",\"e\",\"o\",\"i\",\"t\",\"v\")AS("
               "SELECT 0,\"e1\".\"e\",\"e1\".\"o\",\"e1\".\"i\",\"e1\".\"t\",\"e1\".\"v\""
@@ -304,19 +334,19 @@ xql2xml(
    " ORDER BY 1 DESC,2 ASC,3 ASC"
     ")"
    "SELECT \"l\",\"i\",\"t\",\"v\" FROM \"w1\""
-   ,-1, &stE, 0)))
+   ,-1, SQLITE_PREPARE_PERSISTENT, &stE, 0)))
     goto exit;
-  if ((rc = sqlite3_prepare_v2(d
+  if ((rc = sqlite3_prepare_v3(d
    ,"SELECT \"v\",\"n\" FROM \"XqlA\" WHERE \"e\"=?1 ORDER BY \"o\" ASC"
-   ,-1, &stA, 0)))
+   ,-1, SQLITE_PREPARE_PERSISTENT, &stA, 0)))
     goto exit;
-  if ((rc = sqlite3_prepare_v2(d
+  if ((rc = sqlite3_prepare_v3(d
    ,"SELECT \"v\" FROM \"XqlT\" WHERE \"i\"=?1"
-   ,-1, &stT, 0)))
+   ,-1, SQLITE_PREPARE_PERSISTENT, &stT, 0)))
     goto exit;
-  if ((rc = sqlite3_prepare_v2(d
+  if ((rc = sqlite3_prepare_v3(d
    ,"SELECT \"v\" FROM \"XqlC\" WHERE \"i\"=?1"
-   ,-1, &stC, 0)))
+   ,-1, SQLITE_PREPARE_PERSISTENT, &stC, 0)))
     goto exit;
   sqlite3_bind_int64(stE, 1, o);
   while (sqlite3_step(stE) == SQLITE_ROW) {
