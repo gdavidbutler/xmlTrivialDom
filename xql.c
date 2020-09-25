@@ -379,6 +379,13 @@ xql2xml(
               rc = xmlEncodeString((s2 = tv), rc, s1, i);
             else
               rc = -1;
+          } else if (rc < 0) {
+            if ((rc = xmlEncodeUri((char *)s2, i, s1, i)) > (int)i) {
+              if ((tv = sqlite3_realloc(s2, rc)))
+                rc = xmlEncodeUri((char *)(s2 = tv), rc, s1, i);
+              else
+                rc = -1;
+            }
           }
         } else
           rc = -1;
@@ -430,6 +437,13 @@ xql2xml(
                 rc = xmlEncodeString((s2 = tv), rc, s1, i);
               else
                 rc = -1;
+            } else if (rc < 0) {
+              if ((rc = xmlEncodeUri((char *)s2, i, s1, i)) > (int)i) {
+                if ((tv = sqlite3_realloc(s2, rc)))
+                  rc = xmlEncodeUri((char *)(s2 = tv), rc, s1, i);
+                else
+                  rc = -1;
+              }
             }
           } else
             rc = -1;
