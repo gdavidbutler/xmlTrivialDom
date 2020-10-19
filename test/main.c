@@ -61,8 +61,10 @@ main(
   if ((rc = xml2xql(db, 0, bf, i, 64, 0)) < 0) {
     fprintf(stderr, "xml2xql:%d:%s\n", rc, sqlite3_errmsg(db));
     return (rc);
-  } else if (rc != i)
-    fprintf(stderr, "xml2xql:%d!=%d:%s\n", rc, i, sqlite3_errmsg(db));
+  } else if (rc != i) {
+    fprintf(stderr, "xml2xql:parse failed %d!=%d\n", rc, i);
+    return (SQLITE_ERROR);
+  }
   if ((rc = sqlite3_exec(db, "COMMIT;", 0,0,0))) {
     fprintf(stderr, "sqlite3_exec:%d:%s\n", rc, sqlite3_errmsg(db));
     return (rc);
