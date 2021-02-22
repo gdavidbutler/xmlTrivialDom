@@ -36,7 +36,32 @@ xqlSchema(
 }
 
 static sqlite3_int64
-si(
+ti(
+  sqlite3 *d
+ ,sqlite3_stmt *s
+ ,sqlite3_stmt *i
+ ,const xmlSt_t *t
+){
+  sqlite3_int64 o;
+
+  sqlite3_bind_text(s, 1, (const char *)t->s, t->l, SQLITE_STATIC);
+  if (sqlite3_step(s) == SQLITE_ROW)
+    o = sqlite3_column_int64(s, 0);
+  else
+    o = 0;
+  sqlite3_reset(s);
+  if (!o) {
+    sqlite3_bind_text(i, 1, (const char *)t->s, t->l, SQLITE_STATIC);
+    sqlite3_bind_int(i, 2, t->o + 1);
+    if (sqlite3_step(i) == SQLITE_DONE)
+      o = sqlite3_last_insert_rowid(d);
+    sqlite3_reset(i);
+  }
+  return (o);
+}
+
+static sqlite3_int64
+ci(
   sqlite3 *d
  ,sqlite3_stmt *s
  ,sqlite3_stmt *i
@@ -93,7 +118,7 @@ cb(
   switch (t) {
 
   case xmlTp_Eb:
-    if (!(o1 = si(X->db, X->stTs, X->stTi, g + l - 1)))
+    if (!(o1 = ti(X->db, X->stTs, X->stTi, g + l - 1)))
       goto exit;
     sqlite3_bind_int64(X->stEi, 1, *(X->pth + l - 1));
     sqlite3_bind_int(X->stEi, 2, 0);
@@ -126,17 +151,17 @@ cb(
       if (rc > 0) {
         s2.s = s1;
         s2.l = rc;
-        o1 = si(X->db, X->stCs, X->stCi, &s2);
+        o1 = ci(X->db, X->stCs, X->stCi, &s2);
       } else
-        o1 = si(X->db, X->stCs, X->stCi, v);
+        o1 = ci(X->db, X->stCs, X->stCi, v);
       sqlite3_free(s1);
     } else
-      o1 = si(X->db, X->stCs, X->stCi, v);
+      o1 = ci(X->db, X->stCs, X->stCi, v);
     if (!o1)
       goto exit;
     if (!n)
       o2 = 0;
-    else if (!(o2 = si(X->db, X->stTs, X->stTi, n)))
+    else if (!(o2 = ti(X->db, X->stTs, X->stTi, n)))
       goto exit;
     sqlite3_bind_int64(X->stAi, 1, *(X->pth + l));
     sqlite3_bind_int(X->stAi, 2, o1);
@@ -166,12 +191,12 @@ cb(
       if (rc > 0) {
         s2.s = s1;
         s2.l = rc;
-        o1 = si(X->db, X->stCs, X->stCi, &s2);
+        o1 = ci(X->db, X->stCs, X->stCi, &s2);
       } else
-        o1 = si(X->db, X->stCs, X->stCi, v);
+        o1 = ci(X->db, X->stCs, X->stCi, v);
       sqlite3_free(s1);
     } else
-      o1 = si(X->db, X->stCs, X->stCi, v);
+      o1 = ci(X->db, X->stCs, X->stCi, v);
     if (!o1)
       goto exit;
     sqlite3_bind_int64(X->stEi, 1, *(X->pth + l));
@@ -256,7 +281,7 @@ xml2xql(
    ,-1, SQLITE_PREPARE_PERSISTENT, &cx.stTs, 0)))
     goto exit;
   if ((rc = -sqlite3_prepare_v3(d
-   ,"INSERT INTO \"XqlT\"(\"v\")VALUES(?1)"
+   ,"INSERT INTO \"XqlT\"(\"v\",\"o\")VALUES(?1,?2)"
    ,-1, SQLITE_PREPARE_PERSISTENT, &cx.stTi, 0)))
     goto exit;
   if ((rc = -sqlite3_prepare_v3(d

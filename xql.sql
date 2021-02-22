@@ -16,11 +16,14 @@
 
 -- XQL tag
 -- v value
+-- o offset of unprefixed name (character after the first ':', if any) */
 CREATE TABLE IF NOT EXISTS "XqlT"(
  "i" INTEGER PRIMARY KEY
 ,"v" TEXT NOT NULL CHECK(TYPEOF("v")='text' AND LENGTH("v")>0)
+,"o" INTEGER NOT NULL CHECK(TYPEOF("o")='integer' AND "o">0)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "XqlT_v" ON "XqlT"("v");
+CREATE INDEX IF NOT EXISTS "XqlT_SUBSTR_v_o" ON "XqlT"(SUBSTR("v","o"));
 CREATE TRIGGER IF NOT EXISTS "XqlT_bd" BEFORE DELETE ON "XqlT" BEGIN
  SELECT RAISE(ABORT,'XqlT referenced') WHERE
      EXISTS(SELECT * FROM "XqlE" WHERE("t","v")=(0,OLD."i"))
