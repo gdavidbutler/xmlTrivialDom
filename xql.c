@@ -151,12 +151,13 @@ cb(
       if (rc > 0) {
         s2.s = s1;
         s2.l = rc;
-        o1 = ci(X->db, X->stCs, X->stCi, &s2);
+        s2.o = v->o;
+        o1 = ti(X->db, X->stTs, X->stTi, &s2);
       } else
-        o1 = ci(X->db, X->stCs, X->stCi, v);
+        o1 = ti(X->db, X->stTs, X->stTi, v);
       sqlite3_free(s1);
     } else
-      o1 = ci(X->db, X->stCs, X->stCi, v);
+      o1 = ti(X->db, X->stTs, X->stTi, v);
     if (!o1)
       goto exit;
     if (!n)
@@ -453,10 +454,10 @@ xql2xml(
           sqlite3_reset(stT);
         }
         sqlite3_str_append(rs, "\"", 1);
-        sqlite3_bind_int64(stC, 1, sqlite3_column_int64(stA, 0));
-        if (sqlite3_step(stC) == SQLITE_ROW
-         && (s1 = sqlite3_column_text(stC, 0))
-         && (i = sqlite3_column_bytes(stC, 0))) {
+        sqlite3_bind_int64(stT, 1, sqlite3_column_int64(stA, 0));
+        if (sqlite3_step(stT) == SQLITE_ROW
+         && (s1 = sqlite3_column_text(stT, 0))
+         && (i = sqlite3_column_bytes(stT, 0))) {
           if ((s2 = sqlite3_malloc(i))) {
             if ((rc = xmlEncodeString(s2, i, s1, i)) > (int)i) {
               if ((tv = sqlite3_realloc(s2, rc)))
@@ -480,7 +481,7 @@ xql2xml(
             sqlite3_str_append(rs, (const char *)s1, i);
           sqlite3_free(s2);
         }
-        sqlite3_reset(stC);
+        sqlite3_reset(stT);
         sqlite3_str_append(rs, "\"", 1);
       }
       sqlite3_reset(stA);
