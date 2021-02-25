@@ -192,6 +192,7 @@ cb(
       if (rc > 0) {
         s2.s = s1;
         s2.l = rc;
+        s2.o = 0;
         o1 = ci(X->db, X->stCs, X->stCi, &s2);
       } else
         o1 = ci(X->db, X->stCs, X->stCi, v);
@@ -282,7 +283,7 @@ xml2xql(
    ,-1, SQLITE_PREPARE_PERSISTENT, &cx.stTs, 0)))
     goto exit;
   if ((rc = -sqlite3_prepare_v3(d
-   ,"INSERT INTO \"XqlT\"(\"v\",\"o\")VALUES(?1,?2)"
+   ,"INSERT INTO \"XqlT\"(\"v\",\"l\")VALUES(?1,?2)"
    ,-1, SQLITE_PREPARE_PERSISTENT, &cx.stTi, 0)))
     goto exit;
   if ((rc = -sqlite3_prepare_v3(d
