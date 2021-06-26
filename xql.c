@@ -53,7 +53,7 @@ ti(
   if (!o) {
     sqlite3_bind_text(i, 1, (const char *)t->s, t->l, SQLITE_STATIC);
     sqlite3_bind_int(i, 2, t->o + 1);
-    if (sqlite3_step(i) == SQLITE_DONE && sqlite3_changes(d))
+    if (sqlite3_step(i) == SQLITE_DONE)
       o = sqlite3_last_insert_rowid(d);
     sqlite3_reset(i);
   }
@@ -77,7 +77,7 @@ ci(
   sqlite3_reset(s);
   if (!o) {
     sqlite3_bind_text(i, 1, (const char *)t->s, t->l, SQLITE_STATIC);
-    if (sqlite3_step(i) == SQLITE_DONE && sqlite3_changes(d))
+    if (sqlite3_step(i) == SQLITE_DONE)
       o = sqlite3_last_insert_rowid(d);
     sqlite3_reset(i);
   }
@@ -125,7 +125,7 @@ cb(
     sqlite3_bind_int64(X->stEi, 3, o1);
     rc = sqlite3_step(X->stEi);
     sqlite3_reset(X->stEi);
-    if (rc != SQLITE_DONE || !sqlite3_changes(X->db))
+    if (rc != SQLITE_DONE)
       goto exit;
     if (X->pthM == X->pthN) {
       if (!(tv = sqlite3_realloc(X->pth, (X->pthM + 1) * sizeof (*X->pth))))
