@@ -22,6 +22,12 @@ int xqlSchema(
   sqlite3 *con
 );
 
+/* truncate tables XqlT, XqlC, XqlE and XqlA */
+/* return sqlite3 result code */
+int xqlTruncate(
+  sqlite3 *con
+);
+
 /* parse an XML document of len, limiting max depth, with(out) white bodies into an XQL schema at element (0 for document) in con */
 /* return -sqlite3_errorcode on error else offset of last char parsed */
 /* the database is updated with all that was parseable */
