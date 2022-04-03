@@ -59,7 +59,7 @@ main(
     fprintf(stderr, "sqlite3_exec:%d:%s\n", rc, sqlite3_errmsg(db));
     return (rc);
   }
-  if ((rc = xml2xql(db, 0, bf, i, 64, 0)) < 0) {
+  if ((rc = xml2xql(db, 0, bf, i, 64, 1)) < 0) {
     fprintf(stderr, "xml2xql:%d:%s\n", rc, sqlite3_errmsg(db));
     return (rc);
   } else if (rc != i) {
@@ -83,8 +83,6 @@ main(
       return (-1);
     }
     fwrite(bf, 1, i, stdout);
-    if (!i || *(bf + i - 1) != '\n')
-      putchar('\n');
     sqlite3_free(bf);
   }
   sqlite3_finalize(st);
