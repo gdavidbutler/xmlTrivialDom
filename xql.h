@@ -16,23 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* create an XQL schema in con: tables XqlT, XqlC, XqlE and XqlA */
+/* create an XQL schema in connection: tables XqlT, XqlC, XqlE and XqlA */
 /* return sqlite3_exec() result code */
 int xqlSchema(
-  sqlite3 *con
+  sqlite3 *connection
 );
 
 /* truncate tables XqlT, XqlC, XqlE and XqlA */
 /* return sqlite3 result code */
 int xqlTruncate(
-  sqlite3 *con
+  sqlite3 *connection
 );
 
-/* parse an XML document of len, limiting max depth, with(out) white bodies into an XQL schema at element (0 for document) in con */
+/* parse an XML document of len, limiting max depth, with(out) white bodies into an XQL schema at element (0 for document) in connection */
 /* return -sqlite3_errorcode on error else offset of last char parsed */
-/* the database is updated with all that was parseable */
+/* the connection is updated with all that was parseable */
 int xml2xql(
-  sqlite3 *con
+  sqlite3 *connection
  ,sqlite3_int64 element
  ,const unsigned char *xml
  ,unsigned int len
@@ -40,11 +40,11 @@ int xml2xql(
  ,int whiteBody
 );
 
-/* generate XML document from con starting at element (0 for all documents) */
+/* generate XML document from connection starting at element (0 for all documents) */
 /* return 0 on error else sqlite3_malloc'd zero terminated XML */
 /* if return is not 0 and len is not 0, length is written to len */
 char *xql2xml(
-  sqlite3 *con
+  sqlite3 *connection
  ,sqlite3_int64 element
  ,unsigned int *len
 );
