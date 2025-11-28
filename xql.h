@@ -18,6 +18,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef __XQL_H__
+#define __XQL_H__
+
 /* create an XQL schema in connection: tables XqlT, XqlC, XqlE and XqlA */
 /* return sqlite3_exec() result code */
 int xqlSchema(
@@ -50,3 +53,5 @@ char *xql2xml(
  ,sqlite3_int64 element
  ,unsigned int *len
 );
+
+#endif /* __XQL_H__ */
